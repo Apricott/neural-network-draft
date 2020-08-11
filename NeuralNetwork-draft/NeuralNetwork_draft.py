@@ -1,6 +1,16 @@
 import numpy as np
+import pandas as pd
 from scipy.optimize import fmin_ncg
-from activation import sigmoid
+import activation
+
+
+def reverse_enumerate(L: list, stop: int = 0):
+   """
+   Returns generator iterating L in reversed direction
+   """
+   l = len(L)
+   for i, n in enumerate(reversed(L)):
+       yield l - i - 1 + stop, n
 
 def lrCostFunction(theta, X, y, lmbd, activ_func):
 
@@ -24,7 +34,7 @@ def lrCostFunction(theta, X, y, lmbd, activ_func):
     return J, grad
 
 
-def predict(Theta: list, X: np.ndarray, activation: object = sigmoid) -> np.ndarray:
+def predict(Theta: list, X: np.ndarray, activation: object = activation.sigmoid) -> np.ndarray:
     """
     Predict output of NN classifier given the list of parameters Theta, values array X and activation function used to train NN classifier
     
@@ -67,14 +77,15 @@ def predict(Theta: list, X: np.ndarray, activation: object = sigmoid) -> np.ndar
     return p
 
 
-def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float = 0, activation: object = sigmoid) -> float:
+def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float = 0,
+                        activation: object = activation.sigmoid, activationGrad: object = activation.sigmoidGradient) -> tuple:
     """
-    Return cost value for given weights array nn_params and values array X with assigned classes in array y
+    Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
-    nn_params   - 1 dimensional array of weights associated with every neuron in neural network.
-                  Flattening of weights arrays is necessary to correctly feed them to the optimization function.
+    nn_params   - 1 dimensional array of weights associated with every neuron of the neural network.
+                  "Unrolling" the weights arrays to 1 dimensional vector is necessary to correctly feed them to the optimization function.
 
-    layer_sizes - list with sizes of every layer in network, including the input and output layers,
+    layer_sizes - list with sizes of every layer in the neural network, including the input and output layers,
                   WITHOUT the bias units. 
 
     num_classes - integer specifying the number of existig classes
@@ -88,6 +99,9 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     # Initialize some useful variables
     J = 0
     J_reg = 0
+    Z = []
+    A = []
+    Grad = []
     m = X.shape[0]
     p = np.zeros((m, 1))
 
@@ -105,21 +119,38 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     
     # Add bias unit to the X array
     a = np.concatenate([np.ones((m, 1)), X], axis=1)
+    A += [a]
 
     # Feedforward the neural network
     for layer, theta in enumerate(Theta, 1):
 
         # calculate result of activating layer
-        a = activation(a @ theta.T)    
-        J_reg = J_reg + np.sum(np.sum((theta[:, 1:] ** 2)))
-
+        z = a @ theta.T
+        a = activation(z)    
+        J_reg += np.sum(np.sum((theta[:, 1:] ** 2)))
+        Z += [z]
         #  Add bias unit to the resulting array if it's not the last layer
         if layer != len(Theta):
             a = np.concatenate([np.ones((a.shape[0], 1)), a], axis=1)
+            A += [a]
+        
 
     J_reg *= lmbd/(2*m)
     J = np.sum(np.sum((-y * np.log(a)) - ((1 - y) * np.log(1 - a)))) / m
     J += J_reg
+    
+    # Backpropagation and Gradients
+    error = a - y
+    for layer, theta in reverse_enumerate(Theta, 1):
+        delta = error.T @ A[layer - 1]   
+        theta_grad = (delta + lmbd * Theta[layer - 1]) / m
+        # do not regularize bias units
+        theta_grad[:, 0] = delta[:, 0] / m      
+        Grad += [theta_grad]
+        
+        if layer != 1:
+            error = error @ theta[:,1:] * activationGrad(Z[layer - 2])
 
-    return J
+    grad = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for i, x in reverse_enumerate(Grad)])
 
+    return J, grad
