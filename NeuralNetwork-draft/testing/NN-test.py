@@ -9,8 +9,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 import NeuralNetwork_draft
 import activation 
-
-
+import misc
 
 
 def assertNumpyArraysEqual(this: np.ndarray, that:np.ndarray, atol: float = 1e-08, msg: str =''):
@@ -26,19 +25,34 @@ def assertNumpyArraysEqual(this: np.ndarray, that:np.ndarray, atol: float = 1e-0
         raise AssertionError("Elements don't match!")
 
 
+class TestMisc(unittest.TestCase):
+    
+    def test_reverse_enumerate(self):
+        lst = [1, 2, 3, 4]
+        self.assertListEqual([x for i, x in misc.reverse_enumerate(lst)],[4, 3, 2, 1], "Wrong elements and/or order!")
+        self.assertListEqual([i for i, x in misc.reverse_enumerate(lst, 1)],[4, 3, 2, 1], "Wrong index order! (from 1)")
+        self.assertListEqual([i for i, x in misc.reverse_enumerate(lst, 0)],[3, 2, 1, 0], "Wrong index order! (from 0)")
+
+    def test_randInitializeWeights(self):
+        eps = 0.12
+        W = misc.randInitializeWeights(4, 2, epsilon = eps, random_state=1)
+        test = np.zeros((2, 5))
+        assertNumpyArraysEqual(W, test, eps)
+
+
 class TestActivationFunctions(unittest.TestCase):
 
     def test_sigmoid(self):
-        self.assertAlmostEqual(activation.sigmoid(0), 0.5, msg="Wrong result!")
-        self.assertAlmostEqual(activation.sigmoid(100), 1, msg="Wrong result!")
-        self.assertAlmostEqual(activation.sigmoid(-100), 0, msg="Wrong result!")
-        assertNumpyArraysEqual(activation.sigmoid(np.array([[0, 100, -100]])), np.array([[0.5, 1, 0]]), msg="Wrong result!")
+        self.assertAlmostEqual(activation.sigmoid(0), 0.5, msg="Wrong result! (at 0)")
+        self.assertAlmostEqual(activation.sigmoid(100), 1, msg="Wrong result! (at 100)")
+        self.assertAlmostEqual(activation.sigmoid(-100), 0, msg="Wrong result! (at -100)")
+        assertNumpyArraysEqual(activation.sigmoid(np.array([[0, 100, -100]])), np.array([[0.5, 1, 0]]), msg="Wrong result! (on np.ndarray)")
 
     def test_sigmoidGradient(self):
-        self.assertAlmostEqual(activation.sigmoidGradient(0), 0.25, msg="Wrong result!")
-        self.assertAlmostEqual(activation.sigmoidGradient(100), 0, msg="Wrong result!")
-        self.assertAlmostEqual(activation.sigmoidGradient(-100), 0, msg="Wrong result!")
-        assertNumpyArraysEqual(activation.sigmoidGradient(np.array([[0, 100, -100]])), np.array([[0.25, 0, 0]]), msg="Wrong result!")
+        self.assertAlmostEqual(activation.sigmoidGradient(0), 0.25, msg="Wrong result! (at 0)")
+        self.assertAlmostEqual(activation.sigmoidGradient(100), 0, msg="Wrong result! (at 100)")
+        self.assertAlmostEqual(activation.sigmoidGradient(-100), 0, msg="Wrong result! (at -100)")
+        assertNumpyArraysEqual(activation.sigmoidGradient(np.array([[0, 100, -100]])), np.array([[0.25, 0, 0]]), msg="Wrong result! (on np.ndarray)")
     
 
 class TestNNPrediction(unittest.TestCase):
@@ -77,16 +91,16 @@ class TestNNCostFunctions(unittest.TestCase):
     def test_costWithRegularization(self):
         self.lmbd = 1
         J, _ = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
-        self.assertAlmostEqual(J, 0.383770, 3, "Wrong cost!")
+        self.assertAlmostEqual(J, 0.383770, 3, "Wrong cost! (with regularization)")
 
     def test_grad(self):
         _, grad = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
-        assertNumpyArraysEqual(grad, self.grad, atol=1e-02, msg="Wrong result!")
+        assertNumpyArraysEqual(grad, self.grad, atol=1e-02, msg="Wrong gradient!")
 
     def test_gradWithRegularization(self):
         self.lmbd = 1
         _, grad = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
-        assertNumpyArraysEqual(grad, self.grad_reg, atol=1e-02, msg="Wrong result!")
+        assertNumpyArraysEqual(grad, self.grad_reg, atol=1e-02, msg="Wrong gradient! (with regularization)")
 
 if __name__ == '__main__':
     unittest.main()
