@@ -103,16 +103,10 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     p = np.zeros((m, 1))
 
     y = np.eye(num_classes)[y,:].reshape((m, num_classes))
-
-    Theta = []
+    
     split = 0
-
     # reshape Theta arrays from nn_params array back to their original shape
-    for i in range(0, len(layer_sizes) - 1):
-        temp = layer_sizes[i + 1] * (layer_sizes[i] + 1) + split
-        size = (layer_sizes[i + 1], layer_sizes[i] + 1)
-        Theta += [np.reshape(nn_params[split:temp], size)]
-        split = temp
+    Theta = misc.reshapeTheta(nn_params, layer_sizes)
     
     # Add bias unit to the X array
     a = np.concatenate([np.ones((m, 1)), X], axis=1)
