@@ -7,7 +7,8 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 #print(os.getcwd())
 
-import NeuralNetwork_draft
+import neural_network
+import API
 import activation 
 import misc
 
@@ -23,6 +24,39 @@ def assertNumpyArraysEqual(this: np.ndarray, that:np.ndarray, atol: float = 1e-0
     if not np.all(np.abs(this - that) <= atol):
         print(msg)
         raise AssertionError("Elements don't match!")
+
+
+class TestAPI(unittest.TestCase):
+
+    def setUp(self):
+        self.X = pd.read_csv('testing/X.csv', header=None).to_numpy()
+        ## classes in this csv are indexed from 1 to 10 rather than 0 to 9, hence subtraction of 1
+        self.y = pd.read_csv('testing/y.csv', header=None).to_numpy() - 1
+        self.Theta1 = pd.read_csv('testing/Theta1_trained.csv', header=None).to_numpy()
+        self.Theta2 = pd.read_csv('testing/Theta2_trained.csv', header=None).to_numpy()
+        self.nn_params = np.concatenate([np.reshape(self.Theta1, (25 * 401, 1)), np.reshape(self.Theta2, (10 * 26, 1))])
+        self.hidden_layer_sizes = [25]
+        self.num_classes = 10
+        self.lmbd = 1
+        self.accuracy = 94.940000
+
+    def test_fit(self):
+        clf = API.NNClassifier(self.lmbd, self.hidden_layer_sizes, activation.sigmoid,
+                              activation.sigmoidGradient, epsilon=0.12, method='Newton-CG', random_state=42)
+        res = clf.fit(self.X, self.y)
+        
+        Theta1 = clf.Theta[0]
+        Theta2 = clf.Theta[1]
+        assertNumpyArraysEqual(Theta1, self.Theta1, atol=1e-02, msg="Different Theta1!")
+        assertNumpyArraysEqual(Theta2, self.Theta2, atol=1e-02, msg="Different Theta2!")
+
+    def test_predict(self):
+        clf = API.NNClassifier(self.lmbd, self.hidden_layer_sizes, activation.sigmoid,
+                              activation.sigmoidGradient, epsilon=0.12, method='Newton-CG', random_state=None)
+        clf.fit(self.X, self.y)
+
+        pred = clf.predict(self.X)
+        self.assertAlmostEqual(np.mean([pred == self.y]) * 100, self.accuracy, places=2, msg="Different accuracy!")
 
 
 class TestMisc(unittest.TestCase):
@@ -63,7 +97,7 @@ class TestNNPrediction(unittest.TestCase):
         self.y = (pd.read_csv('testing/y.csv', header=None).to_numpy() - 1).T
         self.Theta1 = pd.read_csv('testing/Theta1.csv', header=None).to_numpy()
         self.Theta2 = pd.read_csv('testing/Theta2.csv', header=None).to_numpy()
-        self.pred = NeuralNetwork_draft.predict([self.Theta1, self.Theta2], self.X, activation.sigmoid)
+        self.pred = neural_network.predict([self.Theta1, self.Theta2], self.X, activation.sigmoid)
 
     def test_predictions(self):
         self.assertAlmostEqual(np.mean([self.pred == self.y]) * 100, 97.5, 1, "Wrong prediction!")
@@ -85,21 +119,23 @@ class TestNNCostFunctions(unittest.TestCase):
         self.lmbd = 0
 
     def test_cost(self):
-        J, _ = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        J, _ = neural_network.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
         self.assertAlmostEqual(J, 0.287629, 3, "Wrong cost!")
 
     def test_costWithRegularization(self):
         self.lmbd = 1
-        J, _ = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        J, _ = neural_network.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
         self.assertAlmostEqual(J, 0.383770, 3, "Wrong cost! (with regularization)")
 
     def test_grad(self):
-        _, grad = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        _, grad = neural_network.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        grad = grad.reshape((grad.shape[0], 1))
         assertNumpyArraysEqual(grad, self.grad, atol=1e-02, msg="Wrong gradient!")
 
     def test_gradWithRegularization(self):
         self.lmbd = 1
-        _, grad = NeuralNetwork_draft.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        _, grad = neural_network.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
+        grad = grad.reshape((grad.shape[0], 1))
         assertNumpyArraysEqual(grad, self.grad_reg, atol=1e-02, msg="Wrong gradient! (with regularization)")
 
 if __name__ == '__main__':

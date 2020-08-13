@@ -1,55 +1,121 @@
 import numpy as np
-import pd as pandas
-from scipy.optimize import minimize
-import NeuralNetwork_draft 
 import activation
 import misc
 
 
+def predict(Theta: list, X: np.ndarray, fun: object = activation.sigmoid) -> np.ndarray:
+    """
+    Predict output of NN classifier given the list of parameters Theta, values array X and activation function used to train NN classifier
+    
+    Theta is a list of arrays with weights corresponding to the network layers (excluding the output layer)
+    The arrays are sized according to the formula [number of neurons in the next layer(!)] * [number of neurons in the current layer(!)]
+    (!) including the bias unit
 
-class NNClassifier(lmbd=0.0001, hidden_layer_sizes = tuple(100,), fun = activation.sigmoid, 
-				   fun_grad = activation.sigmoidGradient,  epsilon=0.12, method='Newton-CG', random_state=None):
+    > Theta[0]              - input layer weights
+    > Theta[1]  (optional)  - first hidden layer weights
+    > Theta[>1] (optional)  - subsequent layers' weights
 
-	def __init__():
-		self.Theta = []
-		self.layer_sizes = []
-		self.nnCostFunc = NeuralNetwork_draft.nnCostFunction()
-		#self.num_classes = 0
+    The array of predicted classes is calculated by selecting the class with the greatest probability resulted from activating all the input and hidden layers 
+    (considering the activation function mapps values to the range [0,1] 
+    and 
+    the number of neurons in the output layer is equal 
+        - to the number of classes - in case of multiclass classification
+        - 1 or 2 - in case of binary classification
+    )
 
-	def fit(self, X, y):
-		"""
+    """
+   
+    # Initialize some useful variables
+    m = X.shape[0]
+    p = np.zeros((m, 1))
 
-		"""
-		if isinstance(X, pd.DataFrame):
-			X = X.to_numpy()
+    # Add bias unit to the X array
+    a = np.concatenate([np.ones((m, 1)), X], axis=1)
 
-		if isinstance(y, pd.DataFrame):
-			y = y.to_numpy()
+    for layer, theta in enumerate(Theta, 1):
+        a = fun(a @ theta.T)
+        
+        #  Add bias unit to the resulting array if it's not the last layer
+        if layer != len(Theta):
+            a = np.concatenate([np.ones((a.shape[0], 1)), a], axis=1)
 
-		m, n = X.shape()
-		self.num_classes = y.unique()
-		self.layer_sizes = [n] + [x for x in hidden_layer_size] + [1]
+    # Predicted classes are the indices of elements with the biggest value in every row of resulting array a
+    p = np.argmax(a, axis=1)
 
-		self.Theta = [misc.randInitializeWeights(layer_sizes[x], layer_sizes[X + 1], epsilon, random_state) for x in layer_sizes[:-1]]
-		self.nn_params = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for x in self.Theta])
-
-		res = minimize(fun=self.nnCostFunc, 
-				 x0=self.nn_params, 
-				 args=(self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, self.fun, self.fun_grad), 
-				 method=self.method,
-				 jac=True)
-
-		self.nn_paramas = res.x
-
-		# reshape Theta arrays from nn_params array back to their original shape
-		self.Theta = misc.reshapeTheta(nn_params, layer_sizes)
-
-
-	def predict(self, X):
-		"""
-
-		"""
+    return p
 
 
+def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float = 0,
+                        fun: object = activation.sigmoid, fun_grad: object = activation.sigmoidGradient) -> tuple([float, np.ndarray]):
+    """
+    Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
-	
+    nn_params   - 1 dimensional array of weights associated with every neuron of the neural network.
+                    "Unrolling" the weights arrays to a vector is necessary to correctly feed them to the optimization function.
+
+    layer_sizes - list with sizes of every layer in the neural network, including the input and output layers,
+                    WITHOUT the bias units. 
+
+    num_classes - integer specifying the number of existig classes
+
+    lmbd        - regularization parameter, omits the bias units
+    
+    activation  - activation function used to train NN classifier
+
+    activationGrad - gradient of the activation function
+
+    """
+
+    # Initialize some useful variables
+    J = 0
+    J_reg = 0
+    Z = []
+    A = []
+    Grad = []
+    m = X.shape[0]
+    p = np.zeros((m, 1))
+
+    y = np.eye(num_classes)[y,:].reshape((m, num_classes))
+    
+    split = 0
+    # reshape Theta arrays from nn_params array back to their original shape
+    Theta = misc.reshapeTheta(nn_params, layer_sizes)
+    
+    # Add bias unit to the X array
+    a = np.concatenate([np.ones((m, 1)), X], axis=1)
+    A += [a]
+
+    # Feedforward the neural network
+    for layer, theta in enumerate(Theta, 1):
+
+        z = a @ theta.T
+        a = fun(z)    
+        J_reg += np.sum(np.sum((theta[:, 1:] ** 2)))
+        Z += [z]
+        #  Add bias unit to the resulting array if it's not the last layer
+        if layer != len(Theta):
+            a = np.concatenate([np.ones((a.shape[0], 1)), a], axis=1)
+            A += [a]
+        
+
+    J_reg *= lmbd/(2*m)
+    J = np.sum(np.sum((-y * np.log(a)) - ((1 - y) * np.log(1 - a)))) / m
+    J += J_reg
+    
+    # Backpropagation and Gradients
+    error = a - y
+    for layer, theta in misc.reverse_enumerate(Theta, 1):
+        delta = error.T @ A[layer - 1]   
+        theta_grad = (delta + lmbd * Theta[layer - 1]) / m
+        # do not regularize bias units
+        theta_grad[:, 0] = delta[:, 0] / m      
+        Grad += [theta_grad]
+        
+        if layer != 1:
+            error = error @ theta[:,1:] * fun_grad(Z[layer - 2])
+
+    # Gradient has to be "unrolled" to a vector to correctly feed it to the optimization function
+    grad = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for i, x in misc.reverse_enumerate(Grad)])
+    grad = grad.flatten()
+
+    return (J, grad)

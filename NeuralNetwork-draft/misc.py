@@ -1,7 +1,6 @@
 import numpy as np
 
 
-
 def reverse_enumerate(L: list, stop: int = 0):
    """
    Returns generator iterating L in reversed direction
