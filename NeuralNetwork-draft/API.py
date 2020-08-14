@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+from scipy.stats import uniform
 import neural_network as nn
 import activation
 import misc
@@ -43,14 +44,16 @@ class NNClassifier:
 
 	"""
 
-	def __init__(self, lmbd=0.0001, hidden_layer_sizes=[100], fun=activation.sigmoid, 
-				   fun_grad=activation.sigmoidGradient,  epsilon=0.12, method='Newton-CG', random_state=None):
+	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=activation.sigmoid, fun_grad: object=activation.sigmoidGradient, 
+			  epsilon: float=0.12, method: str='Newton-CG', maxiter:int=30, disp:bool=True, random_state: float=None):
 		self.lmbd = lmbd
 		self.hidden_layer_sizes = hidden_layer_sizes
 		self.fun = fun
 		self.fun_grad = fun_grad
 		self.epsilon = epsilon
 		self.method = method
+		self.maxiter = maxiter
+		self.disp = disp
 		self.random_state = random_state
 
 		self.Theta = []
@@ -76,13 +79,14 @@ class NNClassifier:
 		# "Unroll" weights to a vector to correctly feed them to the optimization function
 		self.nn_params = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for x in self.Theta])
 
-		print(self.nn_params.shape)
-
 		options = {
-			'maxiter': 50,
-			'disp': False
+			'maxiter': self.maxiter,
+			'disp': self.disp
 			}
 
+		# cos z tym trzeba zrobic
+		#np.random.seed(self.random_state)
+		#uni_int_seed = uniform(-.1, 1.).rvs(10, random_state=self.random_state)
 		res = minimize(fun=nn.nnCostFunction, 
 				 x0=self.nn_params, 
 				 args=(self.layer_sizes, self.num_classes, X, y, self.lmbd, self.fun, self.fun_grad), 
@@ -90,7 +94,7 @@ class NNClassifier:
 				 jac=True,
 				 options=options)
 
-		self.nn_paramas = res.x
+		self.nn_params = res.x
 		self.cost = res.fun
 		# reshape Theta arrays from nn_params array back to their original shape
 		self.Theta = misc.reshapeTheta(self.nn_params, self.layer_sizes)
@@ -105,6 +109,8 @@ class NNClassifier:
 		if isinstance(X, pd.DataFrame):
 			X = X.to_numpy()
 
+		pred = nn.predict(Theta=self.Theta, X=X, fun=self.fun)
 
+		return pred
 
 	

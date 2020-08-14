@@ -41,9 +41,9 @@ def predict(Theta: list, X: np.ndarray, fun: object = activation.sigmoid) -> np.
 
     # Predicted classes are the indices of elements with the biggest value in every row of resulting array a
     p = np.argmax(a, axis=1)
+    p = np.reshape(p, (p.size, 1))
 
     return p
-
 
 def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float = 0,
                         fun: object = activation.sigmoid, fun_grad: object = activation.sigmoidGradient) -> tuple([float, np.ndarray]):
