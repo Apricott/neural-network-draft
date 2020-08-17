@@ -13,7 +13,6 @@ def reverse_enumerate(L: list, stop: int = 0):
 def randInitializeWeights(L_in: int, L_out: int, epsilon: float = 0.12, random_state = None) -> np.ndarray:
     """
     Randomly initialize the weights of a layer with L_in incoming connections and L_out outgoing connections
-
     Returns an array of size (L_out, L_in + 1), as the first column of the array handles the bias terms
     """
 

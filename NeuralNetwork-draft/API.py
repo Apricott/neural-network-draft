@@ -3,7 +3,8 @@ import pandas as pd
 from scipy.optimize import minimize
 from scipy.stats import uniform
 import neural_network as nn
-import activation
+from activation import sigmoidGradient
+from activation import sigmoid
 import misc
 
 
@@ -26,7 +27,7 @@ class NNClassifier:
 	method : str, default='Newton-CG'
 		Type of solver. For all available types check the documentation of scipy.optimize.minimize function.
 	random_state : int, RandomState instance, default=None
-		Pass an int for reproducible results across multiple function calls.
+		Pass an int for reproducible results across multiple calls.
 
 	Attributes:
 	Theta : list, length=[number of layers]-1
@@ -44,7 +45,7 @@ class NNClassifier:
 
 	"""
 
-	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=activation.sigmoid, fun_grad: object=activation.sigmoidGradient, 
+	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=sigmoid, fun_grad: object=sigmoidGradient, 
 			  epsilon: float=0.12, method: str='Newton-CG', maxiter:int=30, disp:bool=True, random_state: float=None):
 		self.lmbd = lmbd
 		self.hidden_layer_sizes = hidden_layer_sizes
@@ -84,9 +85,6 @@ class NNClassifier:
 			'disp': self.disp
 			}
 
-		# cos z tym trzeba zrobic
-		#np.random.seed(self.random_state)
-		#uni_int_seed = uniform(-.1, 1.).rvs(10, random_state=self.random_state)
 		res = minimize(fun=nn.nnCostFunction, 
 				 x0=self.nn_params, 
 				 args=(self.layer_sizes, self.num_classes, X, y, self.lmbd, self.fun, self.fun_grad), 

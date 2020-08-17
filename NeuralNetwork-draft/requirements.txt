@@ -6,3 +6,4 @@ pytz==2020.1
 setuptools==41.2.0
 six==1.15.0
 scipy==1.5.2
+matplotlib==3.3.1

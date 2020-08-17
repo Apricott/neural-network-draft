@@ -1,9 +1,10 @@
 import numpy as np
-import activation
+from activation import sigmoid
+from activation import sigmoidGradient
 import misc
 
 
-def predict(Theta: list, X: np.ndarray, fun: object = activation.sigmoid) -> np.ndarray:
+def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
     """
     Predict output of NN classifier given the list of parameters Theta, values array X and activation function used to train NN classifier
     
@@ -45,8 +46,8 @@ def predict(Theta: list, X: np.ndarray, fun: object = activation.sigmoid) -> np.
 
     return p
 
-def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float = 0,
-                        fun: object = activation.sigmoid, fun_grad: object = activation.sigmoidGradient) -> tuple([float, np.ndarray]):
+def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float=0,
+                        fun: object=sigmoid, fun_grad: object=sigmoidGradient) -> tuple([float, np.ndarray]):
     """
     Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
