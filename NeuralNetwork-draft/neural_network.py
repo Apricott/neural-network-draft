@@ -47,7 +47,7 @@ def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
     return p
 
 def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float=0,
-                        fun: object=sigmoid, fun_grad: object=sigmoidGradient) -> tuple([float, np.ndarray]):
+                        fun: object=sigmoid, fun_grad: object=sigmoidGradient, out_layer_fun=None) -> tuple([float, np.ndarray]):
     """
     Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
@@ -67,7 +67,6 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
 
     """
 
-    # Initialize some useful variables
     J = 0
     J_reg = 0
     Z = []
@@ -78,7 +77,6 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
 
     y = np.eye(num_classes)[y,:].reshape((m, num_classes))
     
-    split = 0
     # reshape Theta arrays from nn_params array back to their original shape
     Theta = misc.reshapeTheta(nn_params, layer_sizes)
     
@@ -97,13 +95,15 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
         if layer != len(Theta):
             a = np.concatenate([np.ones((a.shape[0], 1)), a], axis=1)
             A += [a]
-        
+    
+    if out_layer_fun is not None:
+        a = out_layer_fun(a)
 
     J_reg *= lmbd/(2*m)
     J = np.sum(np.sum((-y * np.log(a)) - ((1 - y) * np.log(1 - a)))) / m
     J += J_reg
     
-    # Backpropagation and Gradients
+    # Backpropagation and Gradient
     error = a - y
     for layer, theta in misc.reverse_enumerate(Theta, 1):
         delta = error.T @ A[layer - 1]   
@@ -116,7 +116,6 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
             error = error @ theta[:,1:] * fun_grad(Z[layer - 2])
 
     # Gradient has to be "unrolled" to a vector to correctly feed it to the optimization function
-    grad = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for i, x in misc.reverse_enumerate(Grad)])
-    grad = grad.flatten()
+    grad = np.concatenate([x.flatten() for _, x in misc.reverse_enumerate(Grad)])
 
     return (J, grad)

@@ -18,7 +18,6 @@ def assertNumpyArraysEqual(this: np.ndarray, that:np.ndarray, atol: float = 1e-0
     if this.shape != that.shape:
         print(msg)
         raise AssertionError("Shapes don't match")
-    #if not np.allclose(this, that, atol):
     if not np.all(np.abs(this - that) <= atol):
         print(msg)
         raise AssertionError("Elements don't match!")
@@ -45,7 +44,7 @@ class TestAPI(unittest.TestCase):
         
         Theta1 = clf.Theta[0]
         Theta2 = clf.Theta[1]
-                # Doesn't have to be exactly same as test Theta was calculated using other optimization function, what resulted in slightly different parameters
+        # Doesn't have to be exactly same as test Theta was calculated using other optimization function, what resulted in slightly different parameters
         assertNumpyArraysEqual(Theta1, self.Theta1, atol=10, msg="Different Theta1!")
         assertNumpyArraysEqual(Theta2, self.Theta2, atol=10, msg="Different Theta2!")
 

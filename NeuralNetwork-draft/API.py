@@ -22,10 +22,16 @@ class NNClassifier:
 		Activation function for the hidden layer. 
 	fun_grad : object, default=activation.sigmoidGradient
 		Gradient of the activation function used to calculate backpropagation.
+	out_layer_activation: object, default=None
+		Activation function used for the output layer
 	epsilon : float, default=0.12
 		Randomly initialized weights will be in the range [0, epsilon)
 	method : str, default='Newton-CG'
 		Type of solver. For all available types check the documentation of scipy.optimize.minimize function.
+	maxiter : int, default=30
+		Maximum number of solving function iterations.
+	disp : bool, default=False
+		Set visibility of solver messages
 	random_state : int, RandomState instance, default=None
 		Pass an int for reproducible results across multiple calls.
 
@@ -39,18 +45,19 @@ class NNClassifier:
 
 	Methods:
 	fit(X, y) :
-		Fit the model to data matrix X and target(s) y.
+		Fit the model to data array X and target(s) y.
 	predict(X) :	
-		Predict classes using the multi-layer perceptron classifier
+		Predict classes of data in array X using the multi-layer perceptron classifier.
 
 	"""
 
 	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=sigmoid, fun_grad: object=sigmoidGradient, 
-			  epsilon: float=0.12, method: str='Newton-CG', maxiter:int=30, disp:bool=True, random_state: float=None):
+			  out_layer_fun: object=None, epsilon: float=0.12, method: str='Newton-CG', maxiter:int=30, disp:bool=True, random_state: float=None):
 		self.lmbd = lmbd
 		self.hidden_layer_sizes = hidden_layer_sizes
 		self.fun = fun
 		self.fun_grad = fun_grad
+		self.out_layer_fun = out_layer_fun
 		self.epsilon = epsilon
 		self.method = method
 		self.maxiter = maxiter
@@ -87,7 +94,7 @@ class NNClassifier:
 
 		res = minimize(fun=nn.nnCostFunction, 
 				 x0=self.nn_params, 
-				 args=(self.layer_sizes, self.num_classes, X, y, self.lmbd, self.fun, self.fun_grad), 
+				 args=(self.layer_sizes, self.num_classes, X, y, self.lmbd, self.fun, self.fun_grad, self.out_layer_fun), 
 				 method=self.method,
 				 jac=True,
 				 options=options)
@@ -106,6 +113,7 @@ class NNClassifier:
 
 		if isinstance(X, pd.DataFrame):
 			X = X.to_numpy()
+
 
 		pred = nn.predict(Theta=self.Theta, X=X, fun=self.fun)
 
