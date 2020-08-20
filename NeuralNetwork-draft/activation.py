@@ -6,7 +6,7 @@ def sigmoid(z):
     SIGMOID Compute sigmoid function
     """
 
-    g = np.divide(1.0, 1.0 + np.exp(-z))
+    g = np.divide(1., 1. + np.exp(-z))
     return g
 
 def sigmoidGradient(z):
@@ -14,7 +14,7 @@ def sigmoidGradient(z):
     SIGMOIDGRADIENT returns the gradient of the sigmoid function evaluated at z
     """
 
-    g = np.multiply(sigmoid(z), (1 - sigmoid(z)))
+    g = np.multiply(sigmoid(z), (1. - sigmoid(z)))
     return g
 
 def tanh(z):
@@ -30,7 +30,7 @@ def tanhGradient(z):
     TANHGRADIENT returns the gradient of the tanh function evaluated at z
     """
 
-    g = -np.multiply(tanh(z), tanh(z)) + 1
+    g = - np.multiply(tanh(z), tanh(z)) + 1.
     return g
 
 def softmax(z):
@@ -40,4 +40,12 @@ def softmax(z):
     """
     
     g = np.exp(z) / np.sum(np.exp(z), axis=1, keepdims=True)
+    return g
+
+def tanhReScal(z):
+    """
+    TANHRESCAL returns tanh input scaled to range [0, 1], suitable for use with logistic regression cost function
+    """
+    
+    g = (z + 1.) / 2.
     return g

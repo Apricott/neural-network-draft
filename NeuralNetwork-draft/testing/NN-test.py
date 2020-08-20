@@ -10,6 +10,11 @@ import API
 import activation 
 import misc
 
+"""
+Most of these tests are based on Stanford Machine Learning course
+https://www.coursera.org/learn/machine-learning
+
+"""
 
 def assertNumpyArraysEqual(this: np.ndarray, that:np.ndarray, atol: float = 1e-08, msg: str =''):
     '''
@@ -85,6 +90,28 @@ class TestActivationFunctions(unittest.TestCase):
         self.assertAlmostEqual(activation.sigmoidGradient(100), 0, msg="Wrong result! (at 100)")
         self.assertAlmostEqual(activation.sigmoidGradient(-100), 0, msg="Wrong result! (at -100)")
         assertNumpyArraysEqual(activation.sigmoidGradient(np.array([[0, 100, -100]])), np.array([[0.25, 0, 0]]), msg="Wrong result! (on np.ndarray)")
+
+    def test_tanh(self):
+        self.assertAlmostEqual(activation.tanh(0), 0., msg="Wrong result! (at 0)")
+        self.assertAlmostEqual(activation.tanh(100), 1, msg="Wrong result! (at 100)")
+        self.assertAlmostEqual(activation.tanh(-100), -1., msg="Wrong result! (at -100)")
+        assertNumpyArraysEqual(activation.tanh(np.array([[0, 100, -100]])), np.array([[0, 1., -1.]]), msg="Wrong result! (on np.ndarray)")
+
+    def test_tanhGradient(self):
+        self.assertAlmostEqual(activation.tanhGradient(0), 1., msg="Wrong result! (at 0)")
+        self.assertAlmostEqual(activation.tanhGradient(100), 0, msg="Wrong result! (at 100)")
+        self.assertAlmostEqual(activation.tanhGradient(-100), 0., msg="Wrong result! (at -100)")
+        assertNumpyArraysEqual(activation.tanhGradient(np.array([[0, 100, -100]])), np.array([[1, 0., 0.]]), msg="Wrong result! (on np.ndarray)")
+
+    def test_tanhReScal(self):
+        self.assertAlmostEqual(activation.tanhReScal(0), 0.5, msg="Wrong result! (at 0)")
+        self.assertAlmostEqual(activation.tanhReScal(1), 1, msg="Wrong result! (at 1)")
+        self.assertAlmostEqual(activation.tanhReScal(-1), 0., msg="Wrong result! (at -1)")
+        assertNumpyArraysEqual(activation.tanhReScal(np.array([[0, 1, -1]])), np.array([[0.5, 1., 0.]]), msg="Wrong result! (on np.ndarray)")
+
+    def test_softmax(self):
+        import scipy.special as scsp
+        assertNumpyArraysEqual(activation.softmax(np.array([[0, 1, -1]])), scsp.softmax(np.array([[0, 1, -1]])), msg="Wrong result! (on np.ndarray)")
     
 
 class TestNNPrediction(unittest.TestCase):
@@ -101,7 +128,7 @@ class TestNNPrediction(unittest.TestCase):
         self.assertAlmostEqual(np.mean([pred == self.y]) * 100, 97.5, 1, "Wrong prediction!")
 
 
-class TestNNCostFunctions(unittest.TestCase):
+class TestNNCostFunction(unittest.TestCase):
 
     def setUp(self):
         self.X = pd.read_csv('testing/X.csv', header=None).to_numpy()
@@ -135,6 +162,7 @@ class TestNNCostFunctions(unittest.TestCase):
         _, grad = neural_network.nnCostFunction(self.nn_params, self.layer_sizes, self.num_classes, self.X, self.y, self.lmbd, activation.sigmoid, activation.sigmoidGradient)
         grad = grad.reshape((grad.shape[0], 1))
         assertNumpyArraysEqual(grad, self.grad_reg, atol=1e-02, msg="Wrong gradient! (with regularization)")
+
 
 if __name__ == '__main__':
     unittest.main()
