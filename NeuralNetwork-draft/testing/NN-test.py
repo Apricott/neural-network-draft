@@ -5,10 +5,7 @@ import pandas as pd
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
-import neural_network
-import API
-import activation 
-import misc
+from neural_network_draft import neural_network, API, activation, misc
 
 """
 Most of these tests are based on Stanford Machine Learning course

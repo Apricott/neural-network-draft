@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from scipy.stats import uniform
-import neural_network as nn
-from activation import sigmoidGradient
-from activation import sigmoid
-import misc
+from neural_network_draft import neural_network as nn
+from neural_network_draft.activation import sigmoidGradient
+from neural_network_draft.activation import sigmoid
+from neural_network_draft import misc
 
 
 

@@ -1,7 +1,7 @@
 import numpy as np
-from activation import sigmoid
-from activation import sigmoidGradient
-import misc
+from neural_network_draft.activation import sigmoid
+from neural_network_draft.activation import sigmoidGradient
+from neural_network_draft import misc
 
 
 def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:

@@ -1,12 +1,15 @@
 import numpy as np
 import pandas as pd
-from activation import tanh
-from activation import tanhGradient
-from activation import tanhReScal
 import matplotlib.pyplot as plt
-import os
-from API import NNClassifier
+import os, sys
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from neural_network_draft.activation import tanh, tanhGradient, tanhReScal
+from neural_network_draft.API import NNClassifier
+
+#pardir = os.path.abspath(os.path.join("img_classification_example.py", os.pardir))
+#print(pardir)
 
 X = pd.read_csv('testing/X.csv', header=None).to_numpy()
 y = pd.read_csv('testing/y.csv', header=None).to_numpy()
