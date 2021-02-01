@@ -24,7 +24,7 @@ print("{}Classifier cost: {}".format(os.linesep, clf.cost))
 
 pred = clf.predict(X)
 
-print("Accuracy of the classifier: {}".format(np.mean([pred == y]) * 100))
+print("Accuracy of the classifier: {}%".format(np.mean([pred == y]) * 100))
 input("{}Press Enter to continue...{}".format(os.linesep, os.linesep))
 
 m, _ = X.shape

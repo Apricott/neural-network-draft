@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from scipy.stats import uniform
 from neural_network_draft import neural_network as nn
 from neural_network_draft.activation import sigmoidGradient
 from neural_network_draft.activation import sigmoid
@@ -52,7 +51,7 @@ class NNClassifier:
 	"""
 
 	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=sigmoid, fun_grad: object=sigmoidGradient, 
-			  out_layer_fun: object=None, epsilon: float=0.12, method: str='Newton-CG', maxiter:int=30, disp:bool=True, random_state: float=None):
+			  out_layer_fun: object=None, epsilon: float=0.12, method: str='Newton-CG', maxiter: int=30, disp: bool=True, random_state: float=None):
 		self.lmbd = lmbd
 		self.hidden_layer_sizes = hidden_layer_sizes
 		self.fun = fun
@@ -113,7 +112,6 @@ class NNClassifier:
 
 		if isinstance(X, pd.DataFrame):
 			X = X.to_numpy()
-
 
 		pred = nn.predict(Theta=self.Theta, X=X, fun=self.fun)
 

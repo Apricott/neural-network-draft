@@ -10,7 +10,7 @@ def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
     
     Theta is a list of arrays with weights corresponding to the network layers (excluding the output layer)
     The arrays are sized according to the formula [number of neurons in the next layer(!)] * [number of neurons in the current layer(!)]
-    (!) including the bias unit
+    (!) - including bias unit
 
     > Theta[0]              - input layer weights
     > Theta[1]  (optional)  - first hidden layer weights
@@ -51,17 +51,17 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     """
     Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
-    nn_params   - 1 dimensional array of weights associated with every neuron of the neural network.
-                    "Unrolling" the weights arrays to a vector is necessary to correctly feed them to the optimization function.
+    nn_params      - 1 dimensional array of weights associated with every neuron of the neural network.
+                     "Unrolling" the weights arrays to a vector is necessary to correctly feed them to the optimization function.
 
-    layer_sizes - list with sizes of every layer in the neural network, including the input and output layers,
-                    WITHOUT the bias units. 
+    layer_sizes    - list with sizes of every layer in the neural network, including the input and output layers,
+                     WITHOUT the bias units. 
 
-    num_classes - integer specifying the number of existig classes
+    num_classes    - integer specifying the number of existig classes
 
-    lmbd        - regularization parameter, omits the bias units
+    lmbd           - regularization parameter, omits the bias units
     
-    activation  - activation function used to train NN classifier
+    activation     - activation function used to train NN classifier
 
     activationGrad - gradient of the activation function
 
@@ -84,7 +84,7 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     a = np.concatenate([np.ones((m, 1)), X], axis=1)
     A += [a]
 
-    # Feedforward the neural network
+    # Feedforward neural network
     for layer, theta in enumerate(Theta, 1):
 
         z = a @ theta.T
@@ -108,7 +108,7 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
     for layer, theta in misc.reverse_enumerate(Theta, 1):
         delta = error.T @ A[layer - 1]   
         theta_grad = (delta + lmbd * Theta[layer - 1]) / m
-        # do not regularize bias units
+        # do not regularize bias units! / reverse the regularization of the first column
         theta_grad[:, 0] = delta[:, 0] / m      
         Grad += [theta_grad]
         
