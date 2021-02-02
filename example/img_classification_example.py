@@ -17,7 +17,7 @@ y = pd.read_csv('testing/y.csv', header=None).to_numpy()
 y = np.mod(y, 10)
 
 clf = NNClassifier(lmbd=1, hidden_layer_sizes=[25], fun=tanh, fun_grad=tanhGradient, out_layer_fun=tanhReScal,
-                   epsilon=0.12, method='Newton-CG', maxiter=15, disp=True, random_state=42)
+                   epsilon=0.12, alpha=1., beta=1., threshold=None, method='Newton-CG', maxiter=15, disp=True, random_state=42)
 clf.fit(X, y)
 
 print("{}Classifier cost: {}".format(os.linesep, clf.cost))

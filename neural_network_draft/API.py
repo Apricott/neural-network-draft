@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from copy import copy, deepcopy
 from scipy.optimize import minimize
 from neural_network_draft import neural_network as nn
 from neural_network_draft.activation import sigmoidGradient
@@ -34,6 +35,14 @@ class NNClassifier:
 	random_state : int, RandomState instance, default=None
 		Pass an int for reproducible results across multiple calls.
 
+	## crypto
+	alpha : float, default=1.
+		Penalty factor for False Positives, keep in range [1, inf) 
+    beta : float, default=1.
+		Penalty factor for False Negatives, keep in range [1, inf) 
+	threshold : float, default=None
+		Prediction probabilities lower than the threshold will be considered as equal to 0.
+
 	Attributes:
 	Theta : list, length=[number of layers]-1
 		The ith element represents the weight matrix corresponding to layer i.
@@ -47,21 +56,36 @@ class NNClassifier:
 		Fit the model to data array X and target(s) y.
 	predict(X) :	
 		Predict classes of data in array X using the multi-layer perceptron classifier.
+	score(self, X, y) :
+		Return the mean accuracy on the provided test data and labels, in percents.
+	get_params(self, deep=False) :
+		Return the flatten vector of weights for all network layers
+	get_pred_cost(self, X, y, lmbd, alpha, beta) :
+		Calculate cost of prediction
 
 	"""
 
 	def __init__(self, lmbd: float=0.0001, hidden_layer_sizes: list=[100], fun: object=sigmoid, fun_grad: object=sigmoidGradient, 
-			  out_layer_fun: object=None, epsilon: float=0.12, method: str='Newton-CG', maxiter: int=30, disp: bool=True, random_state: float=None):
-		self.lmbd = lmbd
-		self.hidden_layer_sizes = hidden_layer_sizes
-		self.fun = fun
-		self.fun_grad = fun_grad
-		self.out_layer_fun = out_layer_fun
-		self.epsilon = epsilon
-		self.method = method
-		self.maxiter = maxiter
-		self.disp = disp
-		self.random_state = random_state
+			  out_layer_fun: object=None, epsilon: float=0.12, alpha:float=1., beta:float=1., threshold:float=None, 
+			  method: str='Newton-CG', maxiter: int=30, disp: bool=True, random_state: float=None):
+
+		self._lmbd = lmbd
+		self._hidden_layer_sizes = hidden_layer_sizes
+		self._fun = fun
+		self._fun_grad = fun_grad
+		self._out_layer_fun = out_layer_fun
+		self._epsilon = epsilon
+		self._method = method
+		self._maxiter = maxiter
+		self._disp = disp
+		self._random_state = random_state
+
+		## crypto
+		self._alpha = alpha
+		self._beta = beta
+		self._nn_params = None
+		self._cost_fun = nn.nnCostFunction
+		self._threshold = threshold 
 
 		self.Theta = []
 		self.layer_sizes = []
@@ -79,32 +103,33 @@ class NNClassifier:
 			y = y.to_numpy()
 
 		m, n = X.shape
-		self.num_classes = len(np.unique(y))
-		self.layer_sizes = [n] + [x for x in self.hidden_layer_sizes] + [self.num_classes]
+		self._num_classes = len(np.unique(y))
+		self.layer_sizes = [n] + [x for x in self._hidden_layer_sizes] + [self._num_classes]
 
-		self.Theta = [misc.randInitializeWeights(self.layer_sizes[i], self.layer_sizes[i + 1], self.epsilon, self.random_state) for i, x in enumerate(self.layer_sizes[:-1])]
+		self.Theta = [misc.randInitializeWeights(self.layer_sizes[i], self.layer_sizes[i + 1], self._epsilon, self._random_state) 
+				for i, x in enumerate(self.layer_sizes[:-1])]
 		# "Unroll" weights to a vector to correctly feed them to the optimization function
-		self.nn_params = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for x in self.Theta])
+		self._nn_params = np.concatenate([np.reshape(x, (x.shape[0] * x.shape[1], 1)) for x in self.Theta])
 
 		options = {
-			'maxiter': self.maxiter,
-			'disp': self.disp
+			'maxiter': self._maxiter,
+			'disp': self._disp
 			}
 
-		res = minimize(fun=nn.nnCostFunction, 
-				 x0=self.nn_params, 
-				 args=(self.layer_sizes, self.num_classes, X, y, self.lmbd, self.fun, self.fun_grad, self.out_layer_fun), 
-				 method=self.method,
+		res = minimize(fun=self._cost_fun, 
+				 x0=self._nn_params, 
+				 args=(self.layer_sizes, self._num_classes, X, y, self._lmbd, self._fun, self._fun_grad, self._out_layer_fun, self._alpha, self._beta), 
+				 method=self._method,
 				 jac=True,
 				 options=options)
 
-		self.nn_params = res.x
+		self._nn_params = res.x
 		self.cost = res.fun
 		# reshape Theta arrays from nn_params array back to their original shape
-		self.Theta = misc.reshapeTheta(self.nn_params, self.layer_sizes)
+		self.Theta = misc.reshapeTheta(self._nn_params, self.layer_sizes)
 
 
-	def predict(self, X):
+	def predict(self, X) -> np.ndarray:
 		"""
 		Predict classes corresponding to the examples in X array using the multi-layer perceptron classifier
 
@@ -113,8 +138,58 @@ class NNClassifier:
 		if isinstance(X, pd.DataFrame):
 			X = X.to_numpy()
 
-		pred = nn.predict(Theta=self.Theta, X=X, fun=self.fun)
+		pred = nn.predict(Theta=self.Theta, X=X, fun=self._fun)
 
 		return pred
 
-	
+	## crypto
+
+	def score(self, X, y) -> float:
+		"""
+		Return the mean accuracy on the given test data and labels in percent.
+
+		"""
+		pred = self.predict(X)
+		accuracy = np.mean([pred == y]) * 100.
+
+		return accuracy
+
+	def get_params(self) -> np.ndarray:
+		"""
+		Return the flatten vector of weights for all network layers
+		"""
+		params = np.array(self._nn_params, copy=True)
+		return params
+
+	def get_pred_cost(self, X, y, lmbd, alpha, beta) -> float:
+		"""
+		Calculate cost of prediction
+		"""
+		J, _ = self.cost_fun(self._nn_params, self.layer_sizes, self._num_classes, X, y, 
+					   self._lmbd, self._fun, self._fun_grad, self._out_layer_fun, self._alpha, self._beta)
+
+		return J
+
+	def __deepcopy__(self, memo) -> object : # memo is a dict of id's to copies
+		"""
+		Create deep copy of the classifier
+		"""
+
+		id_self = id(self)        # memoization avoids unnecesary recursion
+		_copy = memo.get(id_self)
+		if _copy is None:
+			_copy = type(self)(
+				deepcopy(self._lmbd, memo),
+				deepcopy(self._hidden_layer_sizes, memo),
+				copy(self._fun),
+				copy(self._fun_grad),
+				copy(self._out_layer_fun, memo),
+				deepcopy(self._epsilon, memo),
+				deepcopy(self._method, memo),
+				deepcopy(self._maxiter, memo),
+				deepcopy(self._disp, memo),
+				deepcopy(self._random_state, memo),
+				deepcopy(self._alpha, memo),
+				deepcopy(self._beta, memo))
+			memo[id_self] = _copy 
+		return _copy

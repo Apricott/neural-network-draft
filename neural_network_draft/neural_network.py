@@ -4,7 +4,7 @@ from neural_network_draft.activation import sigmoidGradient
 from neural_network_draft import misc
 
 
-def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
+def predict(Theta: list, X: np.ndarray, fun: object = sigmoid, threshold:float=None) -> np.ndarray:
     """
     Predict output of NN classifier given the list of parameters Theta, values array X and activation function used to train NN classifier
     
@@ -16,8 +16,10 @@ def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
     > Theta[1]  (optional)  - first hidden layer weights
     > Theta[>1] (optional)  - subsequent layers' weights
 
+    threshold is a float in range (0, 1). Prediction probabilities lower than threshold will be considered as equal to 0.
+
     The array of predicted classes is calculated by selecting the class with the greatest probability resulted from activating all the input and hidden layers 
-    (considering the activation function mapps values to the range [0,1] 
+    (considering the activation function mapps values to the range (0, 1) 
     and 
     the number of neurons in the output layer is equal 
         - to the number of classes - in case of multiclass classification
@@ -40,6 +42,10 @@ def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
         if layer != len(Theta):
             a = np.concatenate([np.ones((a.shape[0], 1)), a], axis=1)
 
+    # set predictions with probability lower than threshold to 0
+    if threshold:
+        a[a < threshold] = 0
+
     # Predicted classes are the indices of elements with the biggest value in every row of resulting array a
     p = np.argmax(a, axis=1)
     p = np.reshape(p, (p.size, 1))
@@ -47,7 +53,7 @@ def predict(Theta: list, X: np.ndarray, fun: object = sigmoid) -> np.ndarray:
     return p
 
 def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X: np.ndarray, y: np.ndarray, lmbd: float=0,
-                        fun: object=sigmoid, fun_grad: object=sigmoidGradient, out_layer_fun=None) -> tuple([float, np.ndarray]):
+                        fun: object=sigmoid, fun_grad: object=sigmoidGradient, out_layer_fun=None, alpha:float=1., beta:float=1.) -> tuple([float, np.ndarray]):
     """
     Return cost value and gradient for given weights array nn_params and values array X with assigned classes in array y
 
@@ -61,9 +67,15 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
 
     lmbd           - regularization parameter, omits the bias units
     
-    activation     - activation function used to train NN classifier
+    fun            - activation function used to train NN classifier
 
-    activationGrad - gradient of the activation function
+    fun_grad       - gradient of the activation function
+
+    out_layer_fun  - activation function used for the last (output) layer
+
+    alpha          - penalty factor for False Positives, keep in range [1, inf) 
+
+    beta           - penalty factor for False Negatives, keep in range [1, inf) 
 
     """
 
@@ -100,9 +112,9 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
         a = out_layer_fun(a)
 
     J_reg *= lmbd/(2*m)
-    J = np.sum(np.sum((-y * np.log(a)) - ((1 - y) * np.log(1 - a)))) / m
+    J = np.sum(np.sum((beta * (-y) * np.log(a)) - alpha * ((1 - y) * np.log(1 - a)) )) / m          # crypto
     J += J_reg
-    
+
     # Backpropagation and Gradient
     error = a - y
     for layer, theta in misc.reverse_enumerate(Theta, 1):
