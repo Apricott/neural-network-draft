@@ -5,7 +5,7 @@ import os, sys
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
-from neural_network_draft.activation import tanh, tanhGradient, tanhReScal
+from neural_network_draft.activation import ReLU, ReLUGradient, softmax
 from neural_network_draft.API import NNClassifier
 
 #pardir = os.path.abspath(os.path.join("img_classification_example.py", os.pardir))
@@ -14,9 +14,10 @@ from neural_network_draft.API import NNClassifier
 X = pd.read_csv('testing/X.csv', header=None).to_numpy()
 y = pd.read_csv('testing/y.csv', header=None).to_numpy()
 ## classes in this csv are labeled like 10,1,2,...,9 rather than 0 to 9, hence the mod(y, 10)
+
 y = np.mod(y, 10)
 
-clf = NNClassifier(lmbd=1, hidden_layer_sizes=[25], fun=tanh, fun_grad=tanhGradient, out_layer_fun=tanhReScal,
+clf = NNClassifier(lmbd=1, hidden_layer_sizes=[25], fun=ReLU, fun_grad=ReLUGradient, out_layer_fun=softmax,
                    epsilon=0.12, alpha=1., beta=1., threshold=None, method='Newton-CG', maxiter=15, disp=True, random_state=42)
 clf.fit(X, y)
 
@@ -32,7 +33,6 @@ rng = np.random.default_rng()
 rp = rng.permutation(m)
 
 original_shape = (20,20)
-num_classes = 10
 
 for i in rp:
     # Display random exaples and check if classifier got them right
@@ -42,7 +42,7 @@ for i in rp:
     plt.imshow(im*255, cmap='gray_r', vmin=0, vmax=255)
 
     pred = clf.predict(ex)
-    print("Neural Network Classifier Prediction: {}".format(np.mod(pred, num_classes)))
+    print("Neural Network Classifier Prediction: {}".format(pred))
     plt.show()
     input("Press Enter to continue...")
 
