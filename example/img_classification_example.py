@@ -8,9 +8,6 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from neural_network_draft.activation import ReLU, ReLUGradient, softmax
 from neural_network_draft.API import NNClassifier
 
-#pardir = os.path.abspath(os.path.join("img_classification_example.py", os.pardir))
-#print(pardir)
-
 X = pd.read_csv('testing/X.csv', header=None).to_numpy()
 y = pd.read_csv('testing/y.csv', header=None).to_numpy()
 ## classes in this csv are labeled like 10,1,2,...,9 rather than 0 to 9, hence the mod(y, 10)

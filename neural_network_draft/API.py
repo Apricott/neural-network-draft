@@ -35,7 +35,6 @@ class NNClassifier:
 	random_state : int, RandomState instance, default=None
 		Pass an int for reproducible results across multiple calls.
 
-	## crypto
 	alpha : float, default=1.
 		Penalty factor for False Positives, keep in range [1, inf) 
     beta : float, default=1.
@@ -79,8 +78,6 @@ class NNClassifier:
 		self._maxiter = maxiter
 		self._disp = disp
 		self._random_state = random_state
-
-		## crypto
 		self._alpha = alpha
 		self._beta = beta
 		self._nn_params = None
@@ -142,7 +139,6 @@ class NNClassifier:
 
 		return pred
 
-	## crypto
 
 	def score(self, X, y) -> float:
 		"""
@@ -150,9 +146,14 @@ class NNClassifier:
 
 		"""
 		pred = self.predict(X)
+
+		if y.ndim == 1:
+			pred = np.ravel(pred)
+
 		accuracy = np.mean([pred == y]) * 100.
 
 		return accuracy
+
 
 	def get_params(self) -> np.ndarray:
 		"""

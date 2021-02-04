@@ -34,6 +34,3 @@ def reshapeTheta(nn_params: np.ndarray, layer_sizes: list) -> list:
         split = temp
 
     return Theta
-
-
-

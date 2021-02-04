@@ -112,7 +112,7 @@ def nnCostFunction(nn_params: np.ndarray, layer_sizes: list, num_classes: int, X
         a = out_layer_fun(a)
 
     J_reg *= lmbd/(2*m)
-    J = np.sum(np.sum((beta * (-y) * np.log(a)) - alpha * ((1 - y) * np.log(1 - a)) )) / m          # crypto
+    J = np.sum(np.sum((beta * (-y) * np.log(a)) - alpha * ((1 - y) * np.log(1 - a)) )) / m 
     J += J_reg
 
     # Backpropagation and Gradient
