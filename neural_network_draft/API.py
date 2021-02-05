@@ -55,8 +55,8 @@ class NNClassifier:
 		Fit the model to data array X and target(s) y.
 	predict(X) :	
 		Predict classes of data in array X using the multi-layer perceptron classifier.
-	score(self, X, y) :
-		Return the mean accuracy on the provided test data and labels, in percents.
+	accuracy_score(self, pred_y, true_y) :
+		Return the mean accuracy on the predicted and true labels, the best performance is 1.
 	get_params(self, deep=False) :
 		Return the flatten vector of weights for all network layers
 	get_pred_cost(self, X, y, lmbd, alpha, beta) :
@@ -140,17 +140,13 @@ class NNClassifier:
 		return pred
 
 
-	def score(self, X, y) -> float:
+	def accuracy_score(self, pred_y, true_y) -> float:
 		"""
-		Return the mean accuracy on the given test data and labels in percent.
+		Return the mean accuracy on the predicted and true labels, the best performance is 1.
 
 		"""
-		pred = self.predict(X)
 
-		if y.ndim == 1:
-			pred = np.ravel(pred)
-
-		accuracy = np.mean([pred == y]) * 100.
+		accuracy = np.mean([pred_y == true_y])
 
 		return accuracy
 
